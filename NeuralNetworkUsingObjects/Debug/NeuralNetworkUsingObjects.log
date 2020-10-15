@@ -1,4 +1,4 @@
 ﻿  Source.cpp
-c:\users\mitch\source\repos\neuralnetworkusingobjects\neuralnetworkusingobjects\source.cpp(321): warning C4326: return type of 'main' should be 'int' instead of 'void'
-c:\users\mitch\source\repos\neuralnetworkusingobjects\neuralnetworkusingobjects\source.cpp(313): warning C4715: 'FullyConnectedNetwork::findNueronPointer': not all control paths return a value
+c:\users\mitch\source\repos\neuralnetworkusingobjects\neuralnetworkusingobjects\source.cpp(439): warning C4326: return type of 'main' should be 'int' instead of 'void'
+c:\users\mitch\source\repos\neuralnetworkusingobjects\neuralnetworkusingobjects\source.cpp(239): warning C4715: 'Network::findNueronPointer': not all control paths return a value
   NeuralNetworkUsingObjects.vcxproj -> C:\Users\Mitch\source\repos\NeuralNetworkUsingObjects\Debug\NeuralNetworkUsingObjects.exe

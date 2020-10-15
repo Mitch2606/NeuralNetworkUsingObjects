@@ -38,6 +38,7 @@ private:
 
 public:
 	int sizeOfList = 0;
+
 	DLList() //Default constructor makes an empty list
 	{
 		head = NULL;
@@ -71,7 +72,9 @@ public:
 	
 	void removeNode(X data)
 	{
-		cout << "trying to remove" << endl;
+		sizeOfList -= 1;
+		traversalPtr = head;
+
 		while (traversalPtr->next != NULL)
 		{
 			if (traversalPtr->data == data)
@@ -81,19 +84,20 @@ public:
 					//Define new Head
 					head = traversalPtr->next;
 					//Delete Connection to deleted Node
-					traversalPtr->next->previous = NULL;
+					head->previous = NULL;
 					//Empty All its Contents
 					EmptyNode();
-
+					return;
 				}
 				else if (traversalPtr == tail)
 				{
 					//Define New Tail
 					tail = traversalPtr->previous;
 					//Delete Connection to deleted Node
-					traversalPtr->previous->next = NULL;
+					tail->next = NULL;
 					//Empty All its contents
 					EmptyNode();
+					return;
 				}
 				else
 				{
@@ -101,8 +105,8 @@ public:
 					traversalPtr->next->previous = traversalPtr->previous;
 					traversalPtr->previous->next = traversalPtr->next;
 
-					//EmptyNodeOfContents
 					EmptyNode();
+					return;
 				}
 			}
 			traversalPtr = traversalPtr->next;
@@ -138,18 +142,14 @@ public:
 	//DebugFunctions
 	void printList()//prints just the data values
 	{
-		cout << traversalPtr->data << ", ";
-		if (traversalPtr->next == NULL)
+		traversalPtr = head;
+		cout << traversalPtr->data->name;
+		while (traversalPtr->next != NULL)
 		{
-			traversalPtr = head;
-			return;
-		}
-		else
-		{
+			cout << ", " << traversalPtr->next->data->name;
 			traversalPtr = traversalPtr->next;
-			printList();
 		}
-
+		traversalPtr = head;
 	}
 
 	void printValues()//Suppose to print the property values of each node in the list
@@ -185,16 +185,17 @@ struct nueron
 	DLList<nueron*> PreviousLayerNodes;
 };
 
-class FullyConnectedNetwork
+class Network
 {
 private:
-	int numberOfNodes = 0;
 	DLList<nueron*> nueronsList;
 	DLList<nueron*> InputNuerons;
 	DLList<nueron*> OutputNuerons;
 
 public:
-	FullyConnectedNetwork()
+	int numberOfNodes = 0;
+
+	Network()
 	{
 		numberOfNodes = 0;
 	}
@@ -207,93 +208,18 @@ public:
 		tmp->name = name;
 		nueronsList.createNode(tmp);
 
-		if (place == 0)
+		if (place == 1)
 		{
 			InputNuerons.createNode(tmp);
 		}
-		else if(place == 1)
+		else if(place == 0)
 		{
 			OutputNuerons.createNode(tmp);
 		}
 	}
 
-	void connectNeuron(string Name1, string Name2)
-	{
-		nueron* nueron1 = findNueronPointer(Name1);
-		nueron* nueron2 = findNueronPointer(Name2);
-
-		nueron1->NextLayerNodes.createNode(nueron2);
-		nueron2->PreviousLayerNodes.createNode(nueron1);
-
-	}
-
-	
-
-	bool connectionexists(string Name1, string Name2)
-	{
-		
-		//Find Node pointers
-		nueron* nueron1 = findNueronPointer(Name1);
-		cout << "got to nueron 2";
-		nueron* nueron2 = findNueronPointer(Name2);
-
-		//Loop over every node in the next layer nodes list of nueron 1 and previous layer nodes list of nueron 2
-		for (int i = 0; i < nueron1->NextLayerNodes.sizeOfList; i++)
-		{
-			//Check if names is in the list
-			if ((nueron1->NextLayerNodes.getValue(i)->name == Name2) ||  (nueron2->PreviousLayerNodes.getValue(i)->name == Name1))
-			{
-				cout << "There is a connection! " << endl;
-				return true;
-			}
-		}
-		cout << "There is no connection" << endl;
-		return false;
-	}
-
-	void disconnectNeuron(string Name1, string Name2)
-	{
-		cout << "got to variabels: " << endl;
-		nueron* nueron1 = findNueronPointer(Name1);
-		nueron* nueron2 = findNueronPointer(Name2);
-
-		cout << "does connection exist? " << endl;
-		if (connectionexists(Name1, Name2))
-		{
-			nueron1->NextLayerNodes.removeNode(nueron2);
-			nueron2->PreviousLayerNodes.removeNode(nueron1);
-		}
-		return;
-
-	}
-
-	void showAllConnections()
-	{
-		nueron* nueron1 = nueronsList.getValue(0);
-		for (int i = 0; i < nueronsList.sizeOfList; i++)
-		{
-			*nueron1 = *(nueronsList.getValue(i));
-			if ((nueron1->NextLayerNodes).sizeOfList == 0)
-			{
-				return;
-			}
-			else
-			{
-				for (int i1 = 0; i1 < (nueron1->NextLayerNodes).sizeOfList; i1++)
-				{
-					cout << endl << "From: ";
-					cout << nueron1->name << " to ";
-					cout << (nueron1->NextLayerNodes).getValue(i1)->name;
-				}
-			}
-			cout << endl;
-			
-		}
-	}
-	
 	nueron* findNueronPointer(string searchString)
 	{
-		cout << "Finding Pointer Value for " << searchString << endl;
 		//Counting Variable
 		int i = 0;
 		{
@@ -311,48 +237,206 @@ public:
 			}
 		}
 	}
+	
+	void connectNeuron(string Name1, string Name2)
+	{
+		nueron* nueron1 = findNueronPointer(Name1);
+		nueron* nueron2 = findNueronPointer(Name2);
+
+		nueron1->NextLayerNodes.createNode(nueron2);
+		nueron2->PreviousLayerNodes.createNode(nueron1);
+
+	}
+
+	void disconnectNeuron(string Name1, string Name2)
+	{
+
+		nueron* nueron1 = findNueronPointer(Name1);
+		nueron* nueron2 = findNueronPointer(Name2);
+
+		if (connectionexists(Name1, Name2))
+		{
+			
+			nueron1->NextLayerNodes.removeNode(nueron2);
+			
+			nueron2->PreviousLayerNodes.removeNode(nueron1);
+
+		}
+		return;
+	}
+
+	bool connectionexists(string Name1, string Name2) //Know this works SO DONT DEBUG IT
+	{
+		//Find Node pointers
+		nueron* nueron1 = findNueronPointer(Name1);
+		nueron* nueron2 = findNueronPointer(Name2);
+
+		//Loop over every node in the next layer nodes list of nueron 1 and previous layer nodes list of nueron 2
+		for (int i = 0; i < nueron1->NextLayerNodes.sizeOfList; i++)
+		{
+			//Check if names is in the list
+			if ((nueron1->NextLayerNodes.getValue(i)->name == Name2) || (nueron2->PreviousLayerNodes.getValue(i)->name == Name1))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void showAllConnections()
+	{
+		nueron* nueron1 = nueronsList.getValue(0);
+
+		for (int i = 0; i < nueronsList.sizeOfList; i++)
+		{
+			nueron1 = nueronsList.getValue(i);
+
+			cout << "\nNode " << nueron1->name << " is connected to "; 
+			if (nueron1->NextLayerNodes.sizeOfList == 0)
+			{
+				cout << "nothing.";
+				continue;
+			}
+			nueron1->NextLayerNodes.printList();
+
+		}
+
+	}
+	
+	
+};
+
+
+class GUI
+{
+
+public:
+
+	Network networkBoi;
+
+	GUI()
+	{
+		cout << "Program Started: " << endl;
+	}
+
+	void FrontPage()
+	{
+		int i = 1;
+		while (i != 0)
+		{
+			cout << "Home Page: " << endl;
+			cout << "____________________________" << endl;
+			cout << "1 - Add Node: " << endl;
+			cout << "2 - Connect Nodes: " << endl;
+			cout << "3 - Display Network: " << endl;
+			cout << "3 - Run Network: " << endl;
+			cout << "0 - End Program: " << endl;
+			cout << "____________________________" << endl;
+
+			cin >> i;
+			switch (i)
+			{
+			case(0):
+			case(1):
+				
+				addSubNodes();
+				cout << "called function";
+				break;
+			case(2):
+				dis_connectNodes();
+				break;
+			case(3):
+				networkBoi.showAllConnections();
+				break;
+			default:
+				break;
+				//case(4):
+				//	network.run();
+			}
+		}
+	}
+
+	void addSubNodes()
+	{
+		int i = 1;
+
+		double data = 0;
+		string name;
+		int place;
+
+
+		while (i != 0)
+		{
+			
+			cout << "____________________________" << endl; 
+			cout << "Manipulate Nodes:" << endl;
+			cout << "1 - Add Node:" << endl;
+			cout << "2 - Sub Node:" << endl;
+			cout << "0 - return: " << endl;
+
+			cin >> i;
+
+			switch (i)
+			{
+			case(0):
+				break;
+			case(1):
+				cout << "Input UNIQUE name for node: " << endl;
+				cin >> name;
+				cout << "Specifive I / O or H: 1,0,2: ";
+				cin >> place;
+
+				networkBoi.createNeuron(data, name, place);
+			}
+		}
+	}
+	void dis_connectNodes()
+	{
+		int i = 1;
+
+		string name1, name2;
+
+		while (i != 0)
+		{
+			cout << "____________________________" << endl;
+			cout << "1 - Connect Nodes" << endl;
+			cout << "2 - Disconnect Nodes" << endl;
+			cout << "0 - Return: " << endl;
+			cout << "____________________________" << endl;
+
+			cin >> i;
+
+			switch (i)
+			{
+			case(0):
+				break;
+			case(1):
+				cout << "Input Nueron1's name, then nueron 2's" << endl; 
+				
+				cin >> name1;
+				cin >> name2;
+
+				networkBoi.connectNeuron(name1, name2);
+				break;
+			case(2):
+				cout << "Input Nueron1's name, then nueron 2's" << endl;
+
+				cin >> name1;
+				cin >> name2;
+
+				networkBoi.disconnectNeuron(name1, name2);
+				break;
+			}
+
+		}
+	}
+
 
 };
 
 
-
-
 void main()
 {
-	FullyConnectedNetwork network;
-	DLList<int> tempList;
-
-	int i = 0;
-	/*
-	//Basic GUI for before VR setup
-	while (i == i)
-	{
-
-	}
-	*/
-
-	network.createNeuron(1, "a", 0);
-
-	network.createNeuron(1, "h1", 2);
-	
-	network.createNeuron(1, "h2", 2);
-
-	
-	network.createNeuron(2, "b", 1);
-
-	network.connectNeuron("a", "b");
-
-	network.connectNeuron("a", "h1");
-	network.connectNeuron("a", "h2");
-
-	network.connectNeuron("h1", "b");
-	network.connectNeuron("h2", "b");
-
-
-	cout << endl << network.connectionexists("a" , "h1") << endl;
-	network.disconnectNeuron("a", "h1");
-
-	cout << endl << "show Connection: ";
-	network.showAllConnections();
-
+	GUI newGui;
+	newGui.FrontPage();
 }
