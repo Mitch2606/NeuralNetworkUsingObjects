@@ -17,9 +17,13 @@ double randFlt() // used to initialize weight values
 
 double relu(double x)
 {
-	if (x < 0)
+	if (x <= 0)
 	{
 		return 0.000000001;
+	}
+	else if (x > 1)
+	{
+		return 1;
 	}
 	return x;
 }
@@ -255,7 +259,6 @@ public:
 		tmp->name = name;
 
 		nueronsList.createNode(tmp);
-
 	}
 
 	void deleteNeuron(string name)
@@ -265,12 +268,12 @@ public:
 		for (int i = 0; i < nueronsList.sizeOfList; i++)
 		{
 			//To Node
-			if (connectionexists(nueronsList.getValue(i)->name, name))
+			if (connectionexists(nueronsList.getValue(i), nueron1))
 			{
 				disconnectNeuron(nueronsList.getValue(i)->name, name);
 			}
 			//From Node
-			if (connectionexists(name, nueronsList.getValue(i)->name))
+			if (connectionexists(nueron1, nueronsList.getValue(i)))
 			{
 				disconnectNeuron(name, nueronsList.getValue(i)->name);
 			}
@@ -302,7 +305,8 @@ public:
 	{
 		nueron* nueron1 = findNueronPointer(Name1);
 		nueron* nueron2 = findNueronPointer(Name2);
-		if (connectionexists(Name1, Name2))
+		
+		if (connectionexists(nueron1, nueron2))
 		{
 			cout << "Connection Already Exists! " << endl;
 			return;
@@ -318,7 +322,7 @@ public:
 		nueron* nueron1 = findNueronPointer(Name1);
 		nueron* nueron2 = findNueronPointer(Name2);
 
-		if (connectionexists(Name1, Name2))
+		if (connectionexists(nueron1, nueron2))
 		{
 			nueron1->NextLayerNodes.removeNode(nueron2);
 			nueron2->PreviousLayerNodes.removeNode(nueron1);
@@ -326,17 +330,15 @@ public:
 		return;
 	}
 
-	bool connectionexists(string Name1, string Name2) //Know this works SO DONT DEBUG IT
+	bool connectionexists(nueron* nueron1, nueron* nueron2) //Know this works SO DONT DEBUG IT
 	{
 		//Find Node pointers
-		nueron* nueron1 = findNueronPointer(Name1);
-		nueron* nueron2 = findNueronPointer(Name2);
-
+	
 		//Loop over every node in the next layer nodes list of nueron 1 and previous layer nodes list of nueron 2
 		for (int i = 0; i < nueron1->NextLayerNodes.sizeOfList; i++)
 		{
 			//Check if names is in the list
-			if (nueron1->NextLayerNodes.getValue(i)->name == Name2)
+			if (nueron1->NextLayerNodes.getValue(i)->name == nueron2->name)
 			{
 				return true;
 			}
@@ -468,10 +470,9 @@ public:
 	void calculateData(nueron* passedNueron)
 	{
 		nueron* pNueron;
-
+		//cout << endl << passedNueron->name << endl;
 		int index;
 		double temp;
-		
 		//Calculates the values
 		temp = 0;
 		for (int i = 0; i < passedNueron->PreviousLayerNodes.sizeOfList; i++)
@@ -497,19 +498,19 @@ public:
 
 	void backpropagation()
 	{
-
+		//todo
 	}
 
 	void resetNetwork()
 	{
-		traversalNueron = nueronsList.getValue(0);
+		nueron* TNueron = nueronsList.getValue(0);
 		for (int i = 0; i <= nueronsList.sizeOfList; i++)
 		{	
-			if (traversalNueron->PreviousLayerNodes.sizeOfList != 0)
+			if (TNueron->PreviousLayerNodes.sizeOfList != 0)
 			{
-				traversalNueron->data = 0.0;
+				TNueron->data = 0.0;
 			}
-			traversalNueron = nueronsList.getValue(i);
+			TNueron = nueronsList.getValue(i);
 		}
 	}
 
@@ -529,39 +530,22 @@ public:
 	GUI()
 	{
 		cout << "Program Started: " << endl;
-		cout << "default 2,3,2 network initialized: " << endl;
+		//cout << "default 2,3,2 network initialized: " << endl;
 		
 		networkBoi.createNeuron("i1");
 		networkBoi.createNeuron("i2");
-
-		networkBoi.createNeuron("h1");
-		networkBoi.createNeuron("h2");
-		networkBoi.createNeuron("h3");
 
 		networkBoi.createNeuron("o1");
 		networkBoi.createNeuron("o2");
 
 		networkBoi.createNeuron("EndNode");
 
-		networkBoi.connectNeuron("i1", "h1");
-		networkBoi.connectNeuron("i1", "h2");
-		networkBoi.connectNeuron("i1", "h3");
-
-		networkBoi.connectNeuron("i2", "h1");
-		networkBoi.connectNeuron("i2", "h2");
-		networkBoi.connectNeuron("i2", "h3");
-
-		networkBoi.connectNeuron("h1", "o1");
-		networkBoi.connectNeuron("h1", "o2");
-
-		networkBoi.connectNeuron("h2", "o1");
-		networkBoi.connectNeuron("h2", "o2");
-
-		networkBoi.connectNeuron("h3", "o1");
-		networkBoi.connectNeuron("h3", "o2");
-		
 		networkBoi.connectNeuron("o1", "EndNode");
 		networkBoi.connectNeuron("o2", "EndNode");
+
+		addaBunch("h", 4, 100);
+		networkBoi.run(1, inputs, preffered);
+
 	}
 
 	void FrontPage()
@@ -617,7 +601,7 @@ public:
 				{
 					break;
 				}
-				
+				cout << "Eoches: ";
 				cin >> apoches;
 
 				networkBoi.run(apoches, inputs, preffered);
@@ -709,11 +693,71 @@ public:
 		}
 	}
 
+	void addaBunch(string name1, int num, int num1)
+	{
+		string name = name1;
+		string name2 = "i"; 
+		string name3 = "o";
+
+		string tempName;
+
+		//FULLY connect to first layer
+		for (int i = 0; i < num1; i++)
+		{
+			name1 = name + to_string(i);
+			networkBoi.createNeuron(name1);
+			//cout << "________________" << endl;
+			for (int i1 = 1; i1 < 3; i1++)
+			{
+				tempName = name2 + to_string(i1);
+				//cout << "Name: " << name << " Name1: " << name1 << " Name2: " << name2 << " Name3 " << name3 << " tName " << tempName << endl;
+
+				networkBoi.connectNeuron(tempName, name1);
+			}
+		}
+		
+		name2 = name;
+		
+		tempName = name + to_string(0);
+		
+		for (int i = 0; i < num; i++)
+		{
+			cout << i  << " | ";
+			for (int i = 0; i < num1; i++)
+			{
+				name1 = tempName + to_string(i);
+				networkBoi.createNeuron(name1);
+				for (int i2 = 0; i2 < num1; i2++)
+				{
+					name2 = name + to_string(i2);
+					//cout << "Name: " << name << " Name1: " << name1 << " Name2: " << name2 << " Name3 " << name3 << " tName " << tempName << endl;
+					networkBoi.connectNeuron(name2, name1);
+				}
+			}
+			name = tempName;
+			tempName = tempName + to_string(0);
+			
+		}
+		
+		name1 = name3;
+		for (int i1 = 1; i1 < 3; i1++)
+		{
+			name3 = name1 + to_string(i1);
+			//cout << "________________" << endl;
+			for (int i = 0; i < num1; i++)
+			{
+				tempName = name + to_string(i);
+			//	cout << "Name: " << name << " Name1: " << name1 << " Name2: " << name2 << " Name3 " << name3 << " tName " << tempName << endl;
+				networkBoi.connectNeuron(tempName, name3);
+			}
+			
+		}
+	
+	}
 };
 
 
 void main()
 {
 	GUI newGui;
-	newGui.FrontPage();
 }
