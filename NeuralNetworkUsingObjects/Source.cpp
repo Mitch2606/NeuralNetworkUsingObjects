@@ -313,7 +313,18 @@ public:
 		}
 		nueron1->NextLayerNodes.createNode(nueron2);
 		nueron2->PreviousLayerNodes.createNode(nueron1);
+	}
 
+	void connectNeuron(nueron* nueron1, nueron* nueron2)//NueronPointers
+	{
+		
+		if (connectionexists(nueron1, nueron2))
+		{
+			cout << "Connection Already Exists! " << endl;
+			return;
+		}
+		nueron1->NextLayerNodes.createNode(nueron2);
+		nueron2->PreviousLayerNodes.createNode(nueron1);
 	}
 
 	void disconnectNeuron(string Name1, string Name2)
@@ -346,6 +357,29 @@ public:
 		return false;
 	}
 
+	//NOT FINISHED
+	void addFullGroupOfNuerons(string inputNodeName, string outputNodeName, string GroupName, int numLayers, int numNodes)
+	{
+		nueron* nueron1 = findNueronPointer(inputNodeName);
+		nueron* nueron2 = findNueronPointer(outputNodeName);
+		
+		string name = GroupName;
+		string name2;
+
+		//Connect to inputNueron
+		for (int i = 0; i < numNodes; i++)
+		{
+			name2 = name + to_string(i);
+			createNeuron(name2);
+			connectNeuron(nueron1, nueron2);
+		}
+
+
+
+
+	}
+
+	//Show Functions
 	void showAllConnections()
 	{
 		traversalNueron = nueronsList.getValue(0);
