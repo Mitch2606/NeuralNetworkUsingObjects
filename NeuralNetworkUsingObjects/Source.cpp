@@ -160,6 +160,19 @@ public:
 		return dataToReturn;
 	}
 
+	void setValue(int iterator, X value)
+	{
+		for (int i = 0; i < iterator; i++)
+		{
+			if (traversalPtr->next != NULL)
+			{
+				traversalPtr = traversalPtr->next;
+			}
+		}
+		traversalPtr->data = value;
+		traversalPtr = head;
+	}
+
 	DLnode<X>* getTail()
 	{
 		return tail;
@@ -228,6 +241,7 @@ public:
 struct nueron
 {
 	double data;
+	double deltaValue;
 	string name;
 
 	DLList<double> weights;
@@ -241,9 +255,10 @@ class Network
 private:
 	DLList<nueron*> nueronsList;
 	nueron* traversalNueron;
-
+	
 public:
 	int numberOfNodes = 0;
+	double preffered[2] = { 0, 0 };
 
 	//Manipulating placement Section
 	Network()
@@ -256,6 +271,7 @@ public:
 		numberOfNodes += 1;
 		nueron* tmp = new nueron;
 		tmp->data = NULL;
+		tmp->deltaValue = NULL;
 		tmp->name = name;
 
 		nueronsList.createNode(tmp);
@@ -329,7 +345,6 @@ public:
 
 	void disconnectNeuron(string Name1, string Name2)
 	{
-
 		nueron* nueron1 = findNueronPointer(Name1);
 		nueron* nueron2 = findNueronPointer(Name2);
 
@@ -441,9 +456,11 @@ public:
 			cout << endl << "___________________" << endl;
 			setInputs(inputs, PO);
 
+			cout << "Feeding Forward: " << endl;
 			calculateData(temppointer);
 			getOutputs();
-			//backpropagation(findNueronPointer("fakeNueron"));
+			cout << "Backpropagating: " << endl;
+			backpropagation(temppointer);
 			resetNetwork();
 			cout << "Apoche: " << i;
 		}
@@ -455,7 +472,10 @@ public:
 		static int picker = 0;
 
 		cout << "Inputs: " << inputs[picker][0] << " , " << inputs[picker][1] << endl;
-		cout << "Prefer: " << inputs[picker][0] << " , " << inputs[picker][1] << endl;
+		cout << "Prefer: " << PO[picker][0] << " , " << PO[picker][1] << endl;
+
+		preffered[0] = PO[picker][0];
+		preffered[1] = PO[picker][1];
 
 		for (int i = 0; i < nueronsList.sizeOfList; i++)
 		{
@@ -527,12 +547,68 @@ public:
 		}
 		//cout << " temp: " << temp << endl;
 		passedNueron->data = relu(temp);
-
 	}
-
-	void backpropagation()
+	
+	void backpropagation(nueron* passedNueron)
 	{
-		//todo
+		nueron* pNueron;//Previous Nueron
+		nueron* nNueron;//Next Nueron
+		int index;
+		double lr = 0.25;
+		double weightValue;
+
+		//Start At Output, and flow to inputs
+		for (int i = 0; i < passedNueron->PreviousLayerNodes.sizeOfList; i++)
+		{
+			pNueron = passedNueron->PreviousLayerNodes.getValue(i);
+
+			cout << endl << pNueron->name;
+			//Calculate current Node's Delta Value
+			if (pNueron->NextLayerNodes.getValue(1)->name == "EndNode")
+			{
+				//Replace 1 with Target Value for that node
+				if (pNueron->name == "o1")
+				{
+					pNueron->deltaValue = (pNueron->data - preffered[0]) * derRelu(pNueron->data);
+				}
+				else
+				{
+					pNueron->deltaValue = (pNueron->data - preffered[1]) * derRelu(pNueron->data);
+				}
+			}
+			else
+			{
+				for (int nextNodeIndex = 0; nextNodeIndex < pNueron->NextLayerNodes.sizeOfList; nextNodeIndex++)
+				{
+					nNueron = pNueron->NextLayerNodes.getValue(nextNodeIndex);
+
+					index = pNueron->NextLayerNodes.findValue(nNueron);
+					weightValue = nNueron->weights.getValue(index);
+
+					pNueron->deltaValue += weightValue * nNueron->deltaValue;
+
+					//cout << endl << "Next DeltaValue" << nNueron->deltaValue;
+
+					nNueron->weights.setValue(index, weightValue - lr * pNueron->data * nNueron->deltaValue);
+				}
+				//cout << "\nFinished Delta for: " << pNueron->name;
+
+				pNueron->deltaValue *= derRelu(pNueron->data);
+			}
+
+		}
+		
+		for (int i = 0; i < passedNueron->PreviousLayerNodes.sizeOfList; i++)
+		{
+			pNueron = passedNueron->PreviousLayerNodes.getValue(i);
+
+			if (pNueron->PreviousLayerNodes.sizeOfList != 0)
+			{
+				backpropagation(pNueron);
+			}
+
+		}
+	
 	}
 
 	void resetNetwork()
@@ -543,13 +619,13 @@ public:
 			if (TNueron->PreviousLayerNodes.sizeOfList != 0)
 			{
 				TNueron->data = 0.0;
+				TNueron->deltaValue = NULL;
 			}
 			TNueron = nueronsList.getValue(i);
 		}
 	}
 
 };
-
 
 class GUI
 {
@@ -558,7 +634,7 @@ public:
 
 	Network networkBoi;
 	double inputs[4][2] = { {0,0},{0,1},{1,0},{1,1} };
-	double preffered[4][2] = { {0,0},{0,1},{0,1},{1,1} };
+	double preffered[4][2] = { {1,1},{1,0},{0,1},{0,0} };
 	int apoches = 1;
 
 	GUI()
@@ -569,22 +645,42 @@ public:
 		networkBoi.createNeuron("i1");
 		networkBoi.createNeuron("i2");
 
+		networkBoi.createNeuron("h1");
+		networkBoi.createNeuron("h2");
+		networkBoi.createNeuron("h3");
+
+		networkBoi.connectNeuron("i1", "h1");
+		networkBoi.connectNeuron("i1", "h2");
+		networkBoi.connectNeuron("i1", "h3");
+
+		networkBoi.connectNeuron("i2", "h1");
+		networkBoi.connectNeuron("i2", "h2");
+		networkBoi.connectNeuron("i2", "h3");
+
 		networkBoi.createNeuron("o1");
 		networkBoi.createNeuron("o2");
+
+		networkBoi.connectNeuron("h1", "o1");
+		networkBoi.connectNeuron("h2", "o1");
+		networkBoi.connectNeuron("h3", "o1");
+
+		networkBoi.connectNeuron("h1", "o2");
+		networkBoi.connectNeuron("h2", "o2");
+		networkBoi.connectNeuron("h3", "o2");
 
 		networkBoi.createNeuron("EndNode");
 
 		networkBoi.connectNeuron("o1", "EndNode");
 		networkBoi.connectNeuron("o2", "EndNode");
 
-		addaBunch("h", 4, 100);
-		networkBoi.run(1, inputs, preffered);
+		//addaBunch("a", 10, 4);
+		FrontPage();
+//		networkBoi.run(1, inputs, preffered);
 
 	}
 
 	void FrontPage()
 	{
-
 		int i = 1;
 		while (i != 0)
 		{
